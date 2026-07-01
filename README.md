@@ -15,7 +15,7 @@ Este repositorio es **solo para instaladores y actualizaciones**. No contiene el
 | **macOS (Apple Silicon)** | `Mijo-*-mac-arm64.pkg` | Instalador estándar (recomendado) |
 | **macOS (Apple Silicon)** | `Mijo-*-mac-arm64.dmg` | Arrastra a Aplicaciones (alternativa) |
 | **macOS (Intel)** | `Mijo-*-mac-x64.pkg` / `.dmg` | Si está publicado en Releases |
-| **Windows (64 bits)** | `Mijo-*-win-x64.exe` | La mayoría de PCs con Windows |
+| **Windows (64 bits)** | `Mijo-*-win-x64.exe` | **Usa v1.13.19 o superior** (versiones anteriores rotas) |
 | **Windows (ARM)** | `Mijo-*-win-arm64.exe` | Surface / PCs con Snapdragon |
 
 También hay archivos `.zip` por si prefieres descomprimir manualmente.
