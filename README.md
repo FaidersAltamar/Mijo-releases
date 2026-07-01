@@ -12,50 +12,33 @@ Este repositorio es **solo para instaladores y actualizaciones**. No contiene el
 
 | Plataforma | Archivo recomendado | Notas |
 |------------|---------------------|-------|
-| **macOS (Apple Silicon)** | `Mijo-*-mac-arm64.dmg` | Mac con chip M1/M2/M3/M4 |
-| **macOS (Intel)** | `Mijo-*-mac-x64.dmg` | Si está publicado en Releases |
+| **macOS (Apple Silicon)** | `Mijo-*-mac-arm64.pkg` | Instalador estándar (recomendado) |
+| **macOS (Apple Silicon)** | `Mijo-*-mac-arm64.dmg` | Arrastra a Aplicaciones (alternativa) |
+| **macOS (Intel)** | `Mijo-*-mac-x64.pkg` / `.dmg` | Si está publicado en Releases |
 | **Windows (64 bits)** | `Mijo-*-win-x64.exe` | La mayoría de PCs con Windows |
 | **Windows (ARM)** | `Mijo-*-win-arm64.exe` | Surface / PCs con Snapdragon |
 
-También hay archivos `.zip` por si prefieres descomprimir manualmente en lugar del instalador.
+También hay archivos `.zip` por si prefieres descomprimir manualmente.
 
 ---
 
-## Instalación en macOS
+## Instalación en macOS (recomendada: `.pkg`)
 
-Los instaladores actuales **no están firmados con certificado de Apple** (sin notarización). La primera vez, macOS puede mostrar:
+1. Descarga `Mijo-*-mac-arm64.pkg` desde [Releases](https://github.com/FaidersAltamar/Mijo-releases/releases/latest).
+2. Abre el archivo `.pkg`.
+3. Sigue el asistente de instalación (Siguiente → Instalar).
+4. Si macOS pregunta si confías en el instalador, elige **Abrir** o **Continuar**.
+5. Abre **Mijo** desde Aplicaciones.
 
-> *«Apple no pudo verificar que Mijo esté libre de malware…»*
+El instalador `.pkg` copia la app a **Aplicaciones** y quita el bloqueo de descarga de internet automáticamente.
 
-**No pulses «Mover al basurero».** Sigue estos pasos:
+### Alternativa: archivo `.dmg`
 
-### Opción recomendada (desde el DMG)
+1. Abre el `.dmg`.
+2. **Arrastra el icono de Mijo a la carpeta Aplicaciones** (como cualquier app de Mac).
+3. La primera vez, si macOS bloquea la app: clic derecho en **Mijo** → **Abrir** → **Abrir**.
 
-1. Abre el archivo `.dmg` que descargaste.
-2. **No hagas doble clic en `Mijo.app` dentro del volumen del DMG.**
-3. Haz doble clic en **`INSTALAR MIJO.command`**.
-4. Si macOS pregunta si confías en el archivo, elige **Abrir**.
-5. Pulsa **Continuar** en el diálogo del instalador.
-6. Mijo se copia a **Aplicaciones** y se abre solo.
-
-### Si el instalador también se bloquea
-
-**Clic derecho:** clic derecho en `INSTALAR MIJO.command` → **Abrir** → **Abrir**.
-
-**Terminal** (ajusta el nombre del volumen si tu versión es distinta):
-
-```bash
-bash "/Volumes/Mijo 1.13.17/INSTALAR MIJO.command"
-```
-
-**Si ya copiaste la app a Aplicaciones:**
-
-```bash
-xattr -cr /Applications/Mijo.app
-open /Applications/Mijo.app
-```
-
-**Ajustes del sistema:** **Privacidad y seguridad** → **Abrir de todas formas** (aparece tras el primer intento bloqueado).
+No hace falta ningún script ni archivo de texto adicional dentro del DMG.
 
 ---
 
@@ -74,9 +57,7 @@ La app se instala para el usuario actual (no requiere administrador).
 La app de escritorio comprueba nuevas versiones en **este repositorio** (`Mijo-releases`).
 
 - En Mijo: menú o ajustes → **Buscar actualizaciones**.
-- En macOS, con builds sin firma de Apple, la actualización in-app puede pedirte **descargar el DMG manualmente** en lugar de reiniciar para aplicar el parche. Usa el enlace que muestra el diálogo o vuelve a esta página.
-
-Publicar una versión nueva aquí **no requiere** que el código fuente sea público.
+- En macOS sin certificado de Apple, la app puede pedirte **descargar el instalador `.pkg`** manualmente. Usa el enlace del diálogo o vuelve a esta página.
 
 ---
 
@@ -109,7 +90,7 @@ Indica tu sistema (macOS/Windows, versión de Mijo, chip Intel o Apple Silicon) 
 
 | Repositorio | Contenido |
 |-------------|-----------|
-| **Mijo-releases** (este, público) | `.dmg`, `.exe`, `.zip`, manifiestos de auto-actualización |
+| **Mijo-releases** (este, público) | `.pkg`, `.dmg`, `.exe`, `.zip`, manifiestos de auto-actualización |
 | **Mijo** (privado) | Código fuente y desarrollo |
 
 Los instaladores se generan y publican automáticamente al lanzar una nueva versión.
@@ -120,7 +101,7 @@ Los instaladores se generan y publican automáticamente al lanzar una nueva vers
 
 **[Download latest release](https://github.com/FaidersAltamar/Mijo-releases/releases/latest)** — Desktop installers for macOS and Windows. This repo has **binaries only**, no source code.
 
-**macOS:** Open the DMG and run **`INSTALAR MIJO.command`** (do not double-click `Mijo.app` inside the DMG). Unsigned builds trigger Gatekeeper; use Right-click → Open or `xattr -cr /Applications/Mijo.app`.
+**macOS:** Prefer the **`.pkg`** installer (standard wizard). Alternatively, open the **`.dmg`** and drag Mijo to Applications; if blocked, right-click → Open once.
 
 **Windows:** Run the `.exe` installer; use “Run anyway” if SmartScreen blocks an unsigned build.
 
