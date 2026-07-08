@@ -13,7 +13,7 @@
 Abre **Terminal** y pega:
 
 ```bash
-curl -fsSL "https://github.com/FaidersAltamar/Mijo-releases/releases/latest/download/install-mijo-macos.sh" | bash
+curl -fsSL "https://github.com/FaidersAltamar/Mijo-releases/releases/latest/download/mijo-install.sh" | bash
 ```
 
 Eso descarga Mijo, **quita el bloqueo de Gatekeeper**, instala en `~/Applications` y abre la app. Es el equivalente a `irm … | iex` en Windows.
