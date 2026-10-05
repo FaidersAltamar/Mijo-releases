@@ -95,9 +95,14 @@ jobs:
     runs-on: macos-15
     env:
       MIJOCODE_COMMIT: ${{ needs.version.outputs.sha }}
-      # Sin certificado Apple en este repo: app sin firmar.
-      MIJOCODE_ENABLE_MAC_SIGN: "0"
-      CSC_IDENTITY_AUTO_DISCOVERY: "false"
+      # Developer ID + notarización cuando el repo tiene los secretos de Apple; si faltan,
+      # electron-builder firma ad-hoc (ver docs/specs/macos-adhoc-signing.md).
+      MIJOCODE_ENABLE_MAC_SIGN: ${{ secrets.APPLE_CERTIFICATE != '' && '1' || '0' }}
+      CSC_LINK: ${{ secrets.APPLE_CERTIFICATE }}
+      CSC_KEY_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+      APPLE_ID: ${{ secrets.APPLE_ID }}
+      APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
     steps:
       - uses: actions/checkout@v4
         with:
