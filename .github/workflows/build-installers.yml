@@ -164,7 +164,8 @@ jobs:
   # electron-builder crea la release como borrador; solo se publica cuando todo terminó bien.
   release:
     needs: [version, build-win, build-mac, build-linux]
-    if: ${{ inputs.publish && !cancelled() && !contains(needs.*.result, 'failure') }}
+    # Si el job version no termina bien (p. ej. GitHub no asigna runner), no hay versión que publicar.
+    if: ${{ inputs.publish && !cancelled() && needs.version.result == 'success' && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') }}
     runs-on: ubuntu-latest
     steps:
       - name: Publish release
