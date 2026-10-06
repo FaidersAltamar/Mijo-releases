@@ -128,6 +128,44 @@ jobs:
             packages/desktop/dist/*.blockmap
             packages/desktop/dist/latest*.yml
 
+  # Mac Intel: nunca publica por su cuenta para no pisar el latest-mac.yml de arm64;
+  # el job release combina ambos (docs/specs/macos-intel-build.md).
+  build-mac-x64:
+    needs: version
+    if: ${{ inputs.platforms == 'all' || inputs.platforms == 'mac' }}
+    runs-on: macos-15-intel
+    env:
+      MIJOCODE_COMMIT: ${{ needs.version.outputs.sha }}
+      MIJOCODE_ENABLE_MAC_SIGN: ${{ secrets.APPLE_CERTIFICATE != '' && '1' || '0' }}
+      CSC_LINK: ${{ secrets.APPLE_CERTIFICATE }}
+      CSC_KEY_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+      APPLE_ID: ${{ secrets.APPLE_ID }}
+      APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: FaidersAltamar/mijocode
+          ref: ${{ needs.version.outputs.sha }}
+          token: ${{ secrets.SOURCE_TOKEN }}
+          persist-credentials: false
+      - uses: jdx/mise-action@v3
+      - uses: pnpm/action-setup@v4
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @mijocode/desktop build
+      - name: Package (macOS Intel)
+        working-directory: packages/desktop
+        run: pnpm exec electron-builder --mac --x64 --config electron-builder.config.js --publish never
+      - uses: actions/upload-artifact@v4
+        with:
+          name: installers-macos-x64
+          if-no-files-found: error
+          retention-days: 7
+          path: |
+            packages/desktop/dist/*-mac-x64.dmg
+            packages/desktop/dist/*-mac-x64.zip
+            packages/desktop/dist/*-mac-x64.*.blockmap
+
   build-linux:
     needs: version
     if: ${{ inputs.platforms == 'all' || inputs.platforms == 'linux' }}
@@ -168,10 +206,51 @@ jobs:
 
   # electron-builder crea la release como borrador; solo se publica cuando todo terminó bien.
   release:
-    needs: [version, build-win, build-mac, build-linux]
+    needs: [version, build-win, build-mac, build-mac-x64, build-linux]
     # Si el job version no termina bien (p. ej. GitHub no asigna runner), no hay versión que publicar.
     if: ${{ inputs.publish && !cancelled() && needs.version.result == 'success' && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') }}
     runs-on: ubuntu-latest
     steps:
+      - name: Download macOS Intel installers
+        if: ${{ needs.build-mac-x64.result == 'success' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: installers-macos-x64
+          path: mac-x64
+      # Un solo latest-mac.yml para arm64 + x64: MacUpdater elige por "arm64" en el nombre.
+      - name: Merge macOS Intel into update feed
+        if: ${{ needs.build-mac-x64.result == 'success' && needs.build-mac.result == 'success' }}
+        working-directory: mac-x64
+        env:
+          TAG: v${{ needs.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          gh release download "$TAG" -R "$GITHUB_REPOSITORY" -p latest-mac.yml -D base --clobber
+          node - <<'EOF'
+          const fs = require("fs");
+          const crypto = require("crypto");
+          const lines = fs.readFileSync("base/latest-mac.yml", "utf8").replace(/\r\n/g, "\n").split("\n");
+          const start = lines.indexOf("files:");
+          if (start < 0) throw new Error("latest-mac.yml sin lista files");
+          let end = start + 1;
+          while (end < lines.length && /^\s/.test(lines[end])) end++;
+          const existing = new Set(
+            lines.slice(start + 1, end).filter((l) => l.startsWith("  - url: ")).map((l) => l.slice(9).trim()),
+          );
+          const artifacts = fs.readdirSync(".").filter((f) => /-mac-x64\.(zip|dmg)$/.test(f))
+            .sort((a, b) => Number(b.endsWith(".zip")) - Number(a.endsWith(".zip")));
+          if (artifacts.length === 0) throw new Error("no hay instaladores mac-x64");
+          const extra = [];
+          for (const file of artifacts) {
+            if (existing.has(file)) continue;
+            const buf = fs.readFileSync(file);
+            const sha512 = crypto.createHash("sha512").update(buf).digest("base64");
+            extra.push(`  - url: ${file}`, `    sha512: ${sha512}`, `    size: ${buf.length}`);
+          }
+          lines.splice(end, 0, ...extra);
+          fs.writeFileSync("latest-mac.yml", lines.join("\n"));
+          console.log(extra.length ? extra.join("\n") : "latest-mac.yml ya incluía mac-x64");
+          EOF
+          gh release upload "$TAG" -R "$GITHUB_REPOSITORY" --clobber ./*-mac-x64.* latest-mac.yml
       - name: Publish release
         run: gh release edit "v${{ needs.version.outputs.version }}" -R "${{ github.repository }}" --draft=false --latest
