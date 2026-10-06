@@ -225,6 +225,9 @@ jobs:
           TAG: v${{ needs.version.outputs.version }}
         run: |
           set -euo pipefail
+          # productName lleva espacio y GitHub lo cambia por "." al subir; electron-builder usa "-".
+          shopt -s nullglob
+          for f in *" "*; do mv "$f" "${f// /-}"; done
           gh release download "$TAG" -R "$GITHUB_REPOSITORY" -p latest-mac.yml -D base --clobber
           node - <<'EOF'
           const fs = require("fs");
