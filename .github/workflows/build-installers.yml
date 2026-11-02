@@ -61,6 +61,18 @@ jobs:
         run: |
           echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
           echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      # Un solo borrador antes de compilar: si lo crea electron-builder en cada plataforma,
+      # las tres lo crean a la vez y quedan varios borradores con el mismo tag.
+      - name: Create draft release
+        if: ${{ inputs.publish }}
+        env:
+          VERSION: ${{ steps.v.outputs.version }}
+        run: |
+          if gh release view "v$VERSION" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "La release v$VERSION ya existe; se reutiliza."
+          else
+            gh release create "v$VERSION" -R "$GITHUB_REPOSITORY" --draft --title "$VERSION" --notes ""
+          fi
 
   build-win:
     needs: version
@@ -77,7 +89,17 @@ jobs:
           persist-credentials: false
       - uses: jdx/mise-action@v3
       - uses: pnpm/action-setup@v4
-      - run: pnpm install --frozen-lockfile
+      # node-linker=hoisted a veces falla al renombrar copias anidadas de esbuild
+      # (ERR_PNPM_ENOENT ... _tmp_* -> esbuild); con --frozen-lockfile reintentar instala lo mismo.
+      - name: Install dependencies
+        shell: bash
+        run: |
+          for attempt in 1 2 3; do
+            pnpm install --frozen-lockfile && exit 0
+            echo "pnpm install falló (intento $attempt)"
+            sleep 10
+          done
+          exit 1
       - run: pnpm --filter @mijocode/desktop build
       - name: Package (Windows)
         working-directory: packages/desktop
@@ -115,7 +137,17 @@ jobs:
           persist-credentials: false
       - uses: jdx/mise-action@v3
       - uses: pnpm/action-setup@v4
-      - run: pnpm install --frozen-lockfile
+      # node-linker=hoisted a veces falla al renombrar copias anidadas de esbuild
+      # (ERR_PNPM_ENOENT ... _tmp_* -> esbuild); con --frozen-lockfile reintentar instala lo mismo.
+      - name: Install dependencies
+        shell: bash
+        run: |
+          for attempt in 1 2 3; do
+            pnpm install --frozen-lockfile && exit 0
+            echo "pnpm install falló (intento $attempt)"
+            sleep 10
+          done
+          exit 1
       - run: pnpm --filter @mijocode/desktop build
       - name: Package (macOS)
         working-directory: packages/desktop
@@ -154,7 +186,17 @@ jobs:
           persist-credentials: false
       - uses: jdx/mise-action@v3
       - uses: pnpm/action-setup@v4
-      - run: pnpm install --frozen-lockfile
+      # node-linker=hoisted a veces falla al renombrar copias anidadas de esbuild
+      # (ERR_PNPM_ENOENT ... _tmp_* -> esbuild); con --frozen-lockfile reintentar instala lo mismo.
+      - name: Install dependencies
+        shell: bash
+        run: |
+          for attempt in 1 2 3; do
+            pnpm install --frozen-lockfile && exit 0
+            echo "pnpm install falló (intento $attempt)"
+            sleep 10
+          done
+          exit 1
       - run: pnpm --filter @mijocode/desktop build
       - name: Package (macOS Intel)
         working-directory: packages/desktop
@@ -189,7 +231,17 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y rpm libarchive-tools
           sudo gem install fpm --no-doc
-      - run: pnpm install --frozen-lockfile
+      # node-linker=hoisted a veces falla al renombrar copias anidadas de esbuild
+      # (ERR_PNPM_ENOENT ... _tmp_* -> esbuild); con --frozen-lockfile reintentar instala lo mismo.
+      - name: Install dependencies
+        shell: bash
+        run: |
+          for attempt in 1 2 3; do
+            pnpm install --frozen-lockfile && exit 0
+            echo "pnpm install falló (intento $attempt)"
+            sleep 10
+          done
+          exit 1
       - run: pnpm --filter @mijocode/desktop build
       - name: Package (Linux)
         working-directory: packages/desktop
