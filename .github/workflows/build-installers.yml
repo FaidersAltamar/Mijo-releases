@@ -77,7 +77,9 @@ jobs:
   build-win:
     needs: version
     if: ${{ inputs.platforms == 'all' || inputs.platforms == 'win' }}
-    runs-on: windows-latest
+    # windows-latest puede ser 2025 sin el generador "Visual Studio 17 2022" que
+    # exige scripts/build-windows-runtime-host.mjs (nuevo en sync 3.18.2).
+    runs-on: windows-2022
     env:
       MIJOCODE_COMMIT: ${{ needs.version.outputs.sha }}
     steps:
@@ -87,6 +89,7 @@ jobs:
           ref: ${{ needs.version.outputs.sha }}
           token: ${{ secrets.SOURCE_TOKEN }}
           persist-credentials: false
+      - uses: ilammy/msvc-dev-cmd@v1
       - uses: jdx/mise-action@v3
       - uses: pnpm/action-setup@v4
       # node-linker=hoisted a veces falla al renombrar copias anidadas de esbuild
@@ -120,14 +123,10 @@ jobs:
     runs-on: macos-15
     env:
       MIJOCODE_COMMIT: ${{ needs.version.outputs.sha }}
-      # Developer ID + notarización cuando el repo tiene los secretos de Apple; si faltan,
-      # electron-builder firma ad-hoc (ver docs/specs/macos-adhoc-signing.md).
-      MIJOCODE_ENABLE_MAC_SIGN: ${{ secrets.APPLE_CERTIFICATE != '' && '1' || '0' }}
-      CSC_LINK: ${{ secrets.APPLE_CERTIFICATE }}
-      CSC_KEY_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-      APPLE_ID: ${{ secrets.APPLE_ID }}
-      APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
-      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      # Acuerdo de Apple Developer caducado → notarize 403. Forzar ad-hoc hasta renovar
+      # (docs/specs/macos-adhoc-signing.md; AGENTS.md: macOS en Mijo-releases sin firma cruzada).
+      MIJOCODE_ENABLE_MAC_SIGN: "0"
+      CSC_IDENTITY_AUTO_DISCOVERY: "false"
     steps:
       - uses: actions/checkout@v4
         with:
@@ -171,12 +170,8 @@ jobs:
     runs-on: macos-15-intel
     env:
       MIJOCODE_COMMIT: ${{ needs.version.outputs.sha }}
-      MIJOCODE_ENABLE_MAC_SIGN: ${{ secrets.APPLE_CERTIFICATE != '' && '1' || '0' }}
-      CSC_LINK: ${{ secrets.APPLE_CERTIFICATE }}
-      CSC_KEY_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-      APPLE_ID: ${{ secrets.APPLE_ID }}
-      APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
-      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      MIJOCODE_ENABLE_MAC_SIGN: "0"
+      CSC_IDENTITY_AUTO_DISCOVERY: "false"
     steps:
       - uses: actions/checkout@v4
         with:
